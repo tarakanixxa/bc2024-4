@@ -57,17 +57,23 @@ const server = http.createServer(async (req, res) => {
         }
     } catch (error) {
         if (error.code === 'ENOENT') {
+            console.log(`Fetching image for HTTP code: ${httpCode}`);
             try {
                 const response = await superagent.get(`https://http.cat/${httpCode}`);
-                const imageBuffer = Buffer.from(response.body);
+                console.log(`Received response with status: ${response.status}`);
+                console.log(`Response headers:`, response.headers);
+                const imageBuffer = Buffer.from(response.body, 'binary');
                 await fs.writeFile(filePath, imageBuffer);
+                console.log(`Image saved to: ${filePath}`);
                 res.writeHead(200, { 'Content-Type': 'image/jpeg' });
                 res.end(imageBuffer);
             } catch (fetchError) {
+                console.error(`Fetch error: ${fetchError.message}`);
                 res.writeHead(404, { 'Content-Type': 'text/plain' });
                 res.end('Not Found');
             }
         } else {
+            console.error(`Server error: ${error.message}`);
             res.writeHead(500, { 'Content-Type': 'text/plain' });
             res.end('Internal Server Error');
         }
@@ -77,4 +83,3 @@ const server = http.createServer(async (req, res) => {
 server.listen(port, host, () => {
     console.log(`Server is running at http://${host}:${port}/`);
 });
-
